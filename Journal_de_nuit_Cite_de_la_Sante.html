@@ -18,7 +18,7 @@ body.dark #memoPanel{background:#2a2600 !important;border-color:#6b5c00 !importa
 body.dark #memoText{background:#2a2600 !important;color:#ffe082 !important}
 body.dark #memoBtn{background:#6b5c00 !important}
 body.dark #btnDarkMode{background:#6b5c00 !important}
-body.dark #btnDictee{background:#1a3d28 !important}
+body.dark #btnDictee{background:#6b5c00 !important}
 body.dark #iaModal > div, body.dark #promptBaseModal > div{background:#1e2820 !important;border-color:#2a3d2e}
 body.dark #iaModal > div > div:first-child, body.dark #promptBaseModal > div > div:first-child{background:#141a15 !important;border-color:#2a3d2e}
 body.dark #promptBaseTexte{color:#dde3ec !important;background:#141a15}
@@ -294,8 +294,8 @@ textarea:focus::placeholder{color:transparent}
     <label style="margin-bottom:6px;display:block">Modules additionnels</label>
     <div class="module-grid">
       <div class="module-toggle" id="mod-titration" onclick="toggleModule('titration',this)"><span class="icon">⚙️</span>Titration PPC</div>
-      <div class="module-toggle" id="mod-o2" onclick="toggleModule('o2',this)"><span class="icon">🫁</span>O₂ d'appoint</div>
       <div class="module-toggle" id="mod-zopiclone" onclick="toggleModule('zopiclone',this)"><span class="icon">💊</span>Zopiclone</div>
+      <div class="module-toggle" id="mod-o2" onclick="toggleModule('o2',this)"><span class="icon">🫁</span>O₂ d'appoint</div>
       <div class="module-toggle" id="mod-urgence-med" onclick="toggleModule('urgence-med',this)"><span class="icon">🚨</span>Urgence &amp; méds</div>
       <div class="module-toggle" id="mod-tile-suite" onclick="toggleModule('tile-suite',this)"><span class="icon">🌅</span>TILE lendemain</div>
     </div>
@@ -416,22 +416,6 @@ textarea:focus::placeholder{color:transparent}
      MODULES CONDITIONNELS
      ══════════════════════════════════ -->
 <!-- MODULE ZOPICLONE -->
-<div class="card cond" id="section-zopiclone">
-  <div class="card-header"" style="background:var(--purple)">💊 Zopiclone<button class="collapse-btn" onclick="toggleCollapse(this)" title="Réduire/agrandir">+</button></div>
-  <div class="card-body">
-    <div class="row c2">
-      <div><label>Heure admin.</label><input type="time" id="zopiHeure"></div>
-      <div><label>Dose</label>
-        <select id="zopiDose"><option value="7,5 mg PO">7,5 mg PO (≤ 65 ans)</option><option value="5 mg PO">5 mg PO (&gt; 65 ans ou insuf. resp.)</option></select></div>
-    </div>
-    <div class="row c2">
-      <div><label>Info conduite automobile transmise</label>
-        <select id="zopiConduite"><option value="transmise verbalement">✓ Transmise verbalement</option><option value="non applicable">Non applicable</option></select></div>
-      <div><label>Effets indésirables observés</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="zopiEffets" class="subtle-ph" placeholder="-"></div>
-    </div>
-  </div>
-</div>
-<!-- ⑤ JOURNAL GÉNÉRAL -->
 <div class="card collapsed" id="card-05">
   <div class="card-header" blue">⑤ Journal général — événements de nuit<button class="collapse-btn" onclick="toggleCollapse(this)" title="Réduire/agrandir">+</button></div>
   <div class="card-body">
@@ -532,16 +516,16 @@ textarea:focus::placeholder{color:transparent}
           </select></div>
       </div>
       <div id="palier-fields-cpap" style="margin-bottom:6px">
-        <label>Pression CPAP (cmH₂O)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierCPAP" class="subtle-ph" placeholder="-">
+        <label>Pression CPAP (cmH₂O)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierCPAP" class="subtle-ph" placeholder="-" onkeydown="if(event.key==='Enter')addPalier()">
       </div>
       <div id="palier-fields-bipap" class="row c2" style="margin-bottom:6px;display:none">
-        <div><label>IPAP (cmH₂O)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierIPAP" class="subtle-ph" placeholder="-"></div>
-        <div><label>EPAP (cmH₂O)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierEPAP" class="subtle-ph" placeholder="-"></div>
+        <div><label>IPAP (cmH₂O)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierIPAP" class="subtle-ph" placeholder="-" onkeydown="if(event.key==='Enter')addPalier()"></div>
+        <div><label>EPAP (cmH₂O)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierEPAP" class="subtle-ph" placeholder="-" onkeydown="if(event.key==='Enter')addPalier()"></div>
       </div>
       <div id="palier-fields-bipapst" class="row c3" style="margin-bottom:6px;display:none">
-        <div><label>IPAP (cmH₂O)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierIPAPst" class="subtle-ph" placeholder="-"></div>
-        <div><label>EPAP (cmH₂O)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierEPAPst" class="subtle-ph" placeholder="-"></div>
-        <div><label>FR (/min)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierFR" class="subtle-ph" placeholder="-"></div>
+        <div><label>IPAP (cmH₂O)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierIPAPst" class="subtle-ph" placeholder="-" onkeydown="if(event.key==='Enter')addPalier()"></div>
+        <div><label>EPAP (cmH₂O)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierEPAPst" class="subtle-ph" placeholder="-" onkeydown="if(event.key==='Enter')addPalier()"></div>
+        <div><label>FR (/min)</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierFR" class="subtle-ph" placeholder="-" onkeydown="if(event.key==='Enter')addPalier()"></div>
       </div>
       <div style="margin-bottom:6px"><label>Commentaire (optionnel)</label>
         <input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="palierComment" placeholder="Ex: confirmé en REM dorsal 30 min" onkeydown="if(event.key==='Enter')addPalier()"></div>
@@ -562,7 +546,7 @@ textarea:focus::placeholder{color:transparent}
       <div id="masque-fields" class="row c3" style="margin-bottom:6px">
         <div><label>Type de masque</label>
           <select id="masqueChType"><option>Nasal</option><option>Facial complet</option><option>Nasal pillow</option><option>Hybride</option></select></div>
-        <div><label>Modèle</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="masqueChModele" placeholder="Ex: AirFit F20"></div>
+        <div><label>Modèle</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="masqueChModele" placeholder="Ex: AirFit F20" onkeydown="if(event.key==='Enter')addMasqueChange()"></div>
         <div><label>Taille</label>
           <select id="masqueChTaille"><option value="">—</option><option>XS</option><option>S</option><option>S-M</option><option>M</option><option>L</option><option>XL</option><option>SW</option></select></div>
       </div>
@@ -570,7 +554,7 @@ textarea:focus::placeholder{color:transparent}
         <div class="row c3">
           <div><label>Action</label>
             <select id="mentonniereAction"><option value="Ajout">Ajout</option><option value="Retrait">Retrait</option></select></div>
-          <div><label>Modèle / taille</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="mentonniereTaille" placeholder="Ex: ResMed S/M"></div>
+          <div><label>Modèle / taille</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="mentonniereTaille" placeholder="Ex: ResMed S/M" onkeydown="if(event.key==='Enter')addMasqueChange()"></div>
           <div></div>
         </div>
       </div>
@@ -582,6 +566,22 @@ textarea:focus::placeholder{color:transparent}
 </div>
 
 <!-- MODULE O2 -->
+<div class="card cond" id="section-zopiclone">
+  <div class="card-header"" style="background:var(--purple)">💊 Zopiclone<button class="collapse-btn" onclick="toggleCollapse(this)" title="Réduire/agrandir">+</button></div>
+  <div class="card-body">
+    <div class="row c2">
+      <div><label>Heure admin.</label><input type="time" id="zopiHeure"></div>
+      <div><label>Dose</label>
+        <select id="zopiDose"><option value="7,5 mg PO">7,5 mg PO (≤ 65 ans)</option><option value="5 mg PO">5 mg PO (&gt; 65 ans ou insuf. resp.)</option></select></div>
+    </div>
+    <div class="row c2">
+      <div><label>Info conduite automobile transmise</label>
+        <select id="zopiConduite"><option value="transmise verbalement">✓ Transmise verbalement</option><option value="non applicable">Non applicable</option></select></div>
+      <div><label>Effets indésirables observés</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="zopiEffets" class="subtle-ph" placeholder="-"></div>
+    </div>
+  </div>
+</div>
+<!-- ⑤ JOURNAL GÉNÉRAL -->
 <div class="card cond" id="section-o2">
   <div class="card-header"" style="background:#6aadd4">🫁 Oxygène d'appoint<button class="collapse-btn" onclick="toggleCollapse(this)" title="Réduire/agrandir">+</button></div>
   <div class="card-body">
@@ -603,7 +603,7 @@ textarea:focus::placeholder{color:transparent}
       <div class="row c2" style="margin-bottom:6px">
         <div><label>Événement</label>
           <select id="o2Evenement"><option>Initiation</option><option>Ajustement débit</option><option>Contrôle de SpO₂</option><option>Cessation</option></select></div>
-        <div><label>SpO₂</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="o2Spo2avant" class="subtle-ph" placeholder="-"></div>
+        <div><label>SpO₂</label><input type="text" autocomplete="off" autocorrect="off" spellcheck="false" id="o2Spo2avant" class="subtle-ph" placeholder="-" onkeydown="if(event.key==='Enter')addO2()"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="btn btn-blue btn-sm" id="o2AddBtn" onclick="addO2()">+ Ajouter</button>
@@ -2292,7 +2292,7 @@ function buildSection_appareillage() {
   L.push('Appareillage initial');
   // Machine selon l'inhalothérapeute
   var inh = v('inh') || '';
-  var machine = inh.indexOf('Renaud') >= 0 ? 'ResMed S11' : inh.indexOf('Nathalie') >= 0 ? 'ResMed S9' : '';
+  var machine = inh.indexOf('Renaud') >= 0 ? 'ResMed S9' : inh.indexOf('Nathalie') >= 0 ? 'ResMed S9' : '';
   if(machine) L.push('Appareil : ' + machine + '.');
   if(presD) L.push('Pression départ : ' + presD + '.');
   if(mt) L.push('Masque : ' + mt + (mm ? ' ' + mm : '') + (mta ? ' taille ' + mta : '') + '.');
@@ -2314,7 +2314,7 @@ function buildSection_nuitPartagee() {
   var snMt = v('snMasqueType'), snMm = v('snMasqueModele'), snMta = v('snMasqueTaille');
   // Machine selon l'inhalothérapeute
   var inh = v('inh') || '';
-  var machine = inh.indexOf('Renaud') >= 0 ? 'ResMed S11' : inh.indexOf('Nathalie') >= 0 ? 'ResMed S9' : '';
+  var machine = inh.indexOf('Renaud') >= 0 ? 'ResMed S9' : inh.indexOf('Nathalie') >= 0 ? 'ResMed S9' : '';
   if(machine) L.push('Appareil TX : ' + machine + '.');
   if(snPresD) L.push('Pression départ TX : ' + snPresD + '.');
   if(snMt) L.push('Masque départ TX : ' + snMt + (snMm ? ' ' + snMm : '') + (snMta ? ' taille ' + snMta : '') + '.');
@@ -2372,6 +2372,10 @@ function buildSection_journal() {
   if(etudeActive==='PSG-SN' && v('heureBascule')) {
     allEvts.push({time:v('heureBascule'), type:'MAS', desc:'Bascule DX → TX'});
   }
+  // Ajouter administration zopiclone dans le journal
+  if(modulesActifs['zopiclone'] && v('zopiHeure') && v('zopiDose')) {
+    allEvts.push({time:v('zopiHeure'), type:'ZOP', desc:v('zopiDose') + ' administré'});
+  }
 
   allEvts.sort(nightSort);
   if(allEvts.length) {
@@ -2384,6 +2388,7 @@ function buildSection_journal() {
       else if(e.type==='O2')   L.push('§O2§'  + e.time + ' — ' + e.desc);
       else if(e.type==='LOFF') L.push('§EVT§' + e.time + ' [Lights-off]' + (e.desc?' '+e.desc:''));
       else if(e.type==='LON')  L.push('§EVT§' + e.time + ' [Lights-on]'  + (e.desc?' '+e.desc:''));
+      else if(e.type==='ZOP')  L.push('§ZOP§' + e.time + ' — ' + e.desc);
     }
   }
   return L;
@@ -2392,6 +2397,7 @@ function buildSection_journal() {
 
 function buildSection_zopiclone() {
   if(!modulesActifs['zopiclone']) return [];
+  if(!v('zopiHeure')) return [];
   var L = [];
   L.push('Zopiclone');
   if(v('zopiHeure') && v('zopiDose')) {
@@ -2470,6 +2476,7 @@ function buildSection_urgence() {
 
 function buildSection_tile() {
   if(!modulesActifs['tile-suite']) return [];
+  if(!v('tileDernierReveil') && !v('tileStageMatin') && !v('tileTTS')) return [];
   var L = [];
   L.push('PSG précédant TILE — vérifications');
   if(v('tilePPC') && v('tilePPC').indexOf('non applicable')===-1)
@@ -2516,8 +2523,8 @@ function buildNote() {
     buildSection_accueil(),
     buildSection_analyseInter(),
     buildSection_enregistrement(),
-    buildSection_zopiclone(),
     buildSection_journal(),
+    buildSection_zopiclone(),
     buildSection_nuitPartagee(),
     buildSection_titration(),
     buildSection_o2(),
@@ -2622,7 +2629,7 @@ function formatNote(text) {
       var mEvt = evtRaw.match(/^(\d{2}:\d{2})(.*)$/);
       if(mEvt) {
         var isLights = mEvt[2].indexOf('[Lights-') >= 0;
-        var evtColor = isLights ? NAVY : '#2e75b6';
+        var evtColor = isLights ? NAVY : '#2d7a50';
         out.push('<p style="'+BASE+'"><span style="font-weight:bold;color:'+evtColor+'">'+mEvt[1]+'</span>'+mEvt[2]+'</p>');
       }
       else out.push('<p style="'+BASE+'">'+evtRaw+'</p>');
@@ -2643,7 +2650,7 @@ function formatNote(text) {
         if(isBascule) {
           out.push('<p style="'+BASE+'color:#5c7a2a;font-weight:bold">'+mMas[1]+mMas[2]+'</p>');
         } else {
-          out.push('<p style="'+BASE+'color:#2a7a2a"><span style="font-weight:bold">'+mMas[1]+'</span>'+mMas[2]+'</p>');
+          out.push('<p style="'+BASE+'"><span style="font-weight:bold;color:#5c7a2a">'+mMas[1]+'</span>'+mMas[2]+'</p>');
         }
       }
       else out.push('<p style="'+BASE+'">'+masRaw+'</p>');
@@ -2654,6 +2661,13 @@ function formatNote(text) {
       var mO2 = o2Raw.match(/^(\d{2}:\d{2})(.*)$/);
       if(mO2) out.push('<p style="'+BASE+'"><span style="font-weight:bold;color:#6aadd4">'+mO2[1]+'</span>'+mO2[2]+'</p>');
       else out.push('<p style="'+BASE+'">'+o2Raw+'</p>');
+      continue;
+    }
+    if(raw.indexOf('§ZOP§') === 0) {
+      var zopRaw = raw.substring(5);
+      var mZop = zopRaw.match(/^(\d{2}:\d{2})(.*)$/);
+      if(mZop) out.push('<p style="'+BASE+'"><span style="font-weight:bold;color:#7b5ea7">'+mZop[1]+'</span> Zopiclone'+mZop[2]+'</p>');
+      else out.push('<p style="'+BASE+'">'+zopRaw+'</p>');
       continue;
     }
     out.push('<p style="'+BASE+'">'+raw+'</p>');
@@ -2739,11 +2753,22 @@ function initCollapseHeaders() {
 
 // ============================================================
 // VUE FINALE / APERÇU
+// ─── MODE NOTE — forcer mode jour ───
+function enterModeNote() {
+  if(document.body.classList.contains('dark')) toggleDarkMode();
+  var btn = document.getElementById('btnDarkMode');
+  if(btn) { btn.style.opacity = '0.3'; btn.style.pointerEvents = 'none'; btn.title = 'Mode nuit indisponible en édition de note'; }
+}
+function quitterModeNote() {
+  var btn = document.getElementById('btnDarkMode');
+  if(btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; btn.title = 'Mode nuit / Mode jour'; }
+}
 // ============================================================
 function retourApercu() {
   document.getElementById('viewFinale').style.display = 'none';
   document.getElementById('viewIA').style.display = 'none';
   document.getElementById('viewApercu').style.display = 'flex';
+  quitterModeNote();
 }
 function retourNoteGeneree() {
   document.getElementById('viewIA').style.display = 'none';
@@ -2816,6 +2841,7 @@ function genererNote(){
   document.getElementById('viewApercu').style.display='none';
   document.getElementById('viewIA').style.display='none';
   document.getElementById('viewFinale').style.display='flex';
+  enterModeNote();
 }
 function copyNote(){
   var div = document.getElementById('noteFinaleText');
@@ -3308,7 +3334,6 @@ function fermerModalIA() {
   document.getElementById('iaModal').style.display = 'none';
 }
 document.addEventListener('click', function(e) {
-  if(e.target === document.getElementById('iaModal')) fermerModalIA();
 });
 // ─── AGENT CONVERSATIONNEL ───
 var agentActifMode = false;
@@ -4111,7 +4136,6 @@ function fermerPromptBase() {
   document.getElementById('promptBaseModal').style.display = 'none';
 }
 document.addEventListener('click', function(e) {
-  if(e.target === document.getElementById('promptBaseModal')) fermerPromptBase();
 });
 function ouvrirPrompt() {
   ouvrirModalIA();
@@ -4336,6 +4360,7 @@ async function iaGenererNote() {
       document.getElementById('noteIAText').innerHTML = formatNote(propre);
       document.getElementById('viewFinale').style.display = 'none';
       document.getElementById('viewIA').style.display = 'flex';
+      enterModeNote();
     }
   } catch(e) {
     agentAjouterLog('\u26a0 Sonnet \u2014 ' + (e.message||'erreur inconnue'));
