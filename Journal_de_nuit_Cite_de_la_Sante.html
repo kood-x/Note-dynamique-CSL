@@ -935,6 +935,9 @@ var modulesActifs = {};
 var events = [], paliers = [], masqueChanges = [], o2Events = [], meds = [];
 var palierOffset = 0, masqueOffset = 0, eventOffset = 0, o2Offset = 0;
 var editingO2Id = null;
+var analyseInterTexte = '';
+var analyseInterActive = false;
+var analyseInterEnCours = false;
 
 // ============================================================
 // MÉDICATION
@@ -944,7 +947,7 @@ var dragSrcMedId = null;
 
 function resetAnalyseInter() {
   var cb = document.getElementById('analyseInterCheck');
-  if(cb && cb.checked) { cb.checked = false; analyseInterTexte = ''; updatePreview(); }
+  if(cb && cb.checked) { cb.checked = false; analyseInterTexte = ''; analyseInterActive = false; updatePreview(); }
 }
 
 function addMed() {
@@ -1266,7 +1269,7 @@ function renderMeds() {
   var el = document.getElementById('medList');
   // Afficher/masquer la checkbox analyse
   var box = document.getElementById('analyseInterBox');
-  if(box) box.style.display = (meds.length > 0 && IA_API_KEY) ? 'block' : 'none';
+  if(box) box.style.display = (meds.length > 0 && (IA_API_KEY || analyseInterActive)) ? 'block' : 'none';
   if (!meds.length) {
     el.innerHTML='<div style="color:var(--muted);font-size:12px;font-style:italic">Aucun médicament — utilisez le formulaire ci-dessous</div>';
     return;
@@ -1516,11 +1519,11 @@ function appliquerSavedState(){
     });
     if(S.etudeActive==='PSG-TX'){var sm=document.getElementById('sec-masque');if(sm)sm.classList.add('on');}
     if(S.etudeActive==='PSG-SN'){var sn=document.getElementById('section-sn');if(sn){sn.classList.add('on');sn.classList.add('collapsed');}}
+    // Restaurer l'analyse des interactions médicamenteuses AVANT les renders
+    if(S.analyseInterTexte) analyseInterTexte = S.analyseInterTexte;
+    if(S.analyseInterCheck) { analyseInterActive = true; var aic=document.getElementById('analyseInterCheck'); if(aic) aic.checked = true; }
     // Rerendre les listes
     renderEvents(); renderPaliers(); renderMasqueChanges(); renderO2(); renderMeds();
-    // Restaurer l'analyse des interactions médicamenteuses
-    if(S.analyseInterTexte) analyseInterTexte = S.analyseInterTexte;
-    if(S.analyseInterCheck) { var aic=document.getElementById('analyseInterCheck'); if(aic) aic.checked = true; }
     calcIMC(); updatePreview();
     // Corriger les symboles collapse
     var allCards=document.querySelectorAll('.card');
@@ -1558,7 +1561,7 @@ function autosaveCapture(){
     medCache: MED_PSG_CACHE,
     agentActif: agentActifMode,
     analyseInterTexte: analyseInterTexte,
-    analyseInterCheck: (document.getElementById('analyseInterCheck') ? document.getElementById('analyseInterCheck').checked : false),
+    analyseInterCheck: analyseInterActive,
     memo: (document.getElementById('memoText')?document.getElementById('memoText').value:'')
   };
   return { state: state, fields: fields, ts: Date.now(),
@@ -2305,11 +2308,11 @@ function buildSection_entete(chambre, date, dossier, inh, etude) {
 
 
 // ─── ANALYSE INTERACTIONS MÉDICAMENTEUSES ───
-var analyseInterTexte = '';
-var analyseInterEnCours = false;
+// (variables déclarées en tête du script pour éviter l'écrasement par hoisting)
 
 function toggleAnalyseInter(actif) {
   if(!IA_API_KEY) { document.getElementById('analyseInterCheck').checked = false; return; }
+  analyseInterActive = actif;
   if(actif && meds.length > 0) {
     genererAnalyseInter();
   } else {
@@ -2321,6 +2324,7 @@ function toggleAnalyseInter(actif) {
 async function genererAnalyseInter() {
   if(!IA_API_KEY || !meds.length) return;
   if(analyseInterEnCours) return;
+  analyseInterActive = true;
   analyseInterEnCours = true;
   // Afficher "en cours" dans l'aperçu
   analyseInterTexte = '[ Analyse en cours... ]';
@@ -2399,8 +2403,8 @@ function buildSection_accueil() {
 }
 
 function buildSection_analyseInter() {
-  var cb = document.getElementById('analyseInterCheck');
-  if(!cb || !cb.checked || !analyseInterTexte) return [];
+  if(!analyseInterActive || !analyseInterTexte) return [];
+  if(analyseInterTexte === '[ Analyse en cours... ]') return ['§NOBREAK§Interactions médicamenteuses — Analyse IA', analyseInterTexte];
   return ['§NOBREAK§Interactions médicamenteuses — Analyse IA', analyseInterTexte];
 }
 
@@ -3069,7 +3073,7 @@ function exporterHTML(){
     medCache: MED_PSG_CACHE,
     agentActif: agentActifMode,
     analyseInterTexte: analyseInterTexte,
-    analyseInterCheck: (document.getElementById('analyseInterCheck') ? document.getElementById('analyseInterCheck').checked : false),
+    analyseInterCheck: analyseInterActive,
     memo: (document.getElementById('memoText')?document.getElementById('memoText').value:'')
   };
   var savedEl = document.getElementById('saved-state');
@@ -4523,7 +4527,11 @@ function iaGetNoteTexte() {
     if(/^(PSG|TILE|MSLT|TME|Polysomnographie|Étude|—).*—.*(Chambre|chambre|\d{4}-\d{2}-\d{2}|\d{1,2} \w+ \d{4})/.test(t)) return false;
     return true;
   });
-  return filtrees.join('\n');
+  var texte = filtrees.join('\n');
+  // Indiquer le sexe à l'IA pour les accords grammaticaux (M/F seul = non identifiant)
+  var sx = v('sexePatient');
+  if(sx) texte += '\n\nSexe : ' + sx;
+  return texte;
 }
 
 async function iaAppelAPI(userMessage, maxTokens) {
