@@ -861,8 +861,10 @@ textarea:focus::placeholder{color:transparent}
   <!-- VUE APERÇU -->
   <div id="viewApercu" style="display:flex;flex-direction:column;flex:1;min-height:0;gap:8px">
     <div class="preview-header">
-      <h3>Aperçu de la note</h3>
-      <span class="preview-label">Se met à jour en temps réel</span>
+      <h3>Aperçu de la note — <span id="apercuModeLabel" style="font-weight:600;color:var(--blue)">Note complète</span></h3>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="btn btn-outline btn-sm" id="btnApercuMode" onclick="toggleApercuMode()">📄 Voir résumé</button>
+      </div>
     </div>
     <div id="previewBox" class="preview-box" style="color:var(--muted);font-style:italic">Commencez à remplir le formulaire — l'aperçu apparaîtra ici au fur et à mesure.</div>
   </div>
@@ -877,12 +879,15 @@ textarea:focus::placeholder{color:transparent}
         </div>
       </div>
       <div style="font-size:13px;font-weight:600;color:var(--note)" class="note-titre">✓ Note — édition manuelle</div>
-      <button class="btn btn-note btn-sm" id="copyBtn" onclick="copyNote()">📋 Copier</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" id="btnResumeFinale" onclick="toggleResumeNote('finale')">📄 Voir résumé</button>
+        <button class="btn btn-note btn-sm" id="copyBtn" onclick="copyNote()">📋 Copier</button>
+      </div>
     </div>
     <div class="note-finale-box">
       <div id="noteFinaleText" contenteditable="true" spellcheck="false" autocorrect="off" style="font-family:Calibri,sans-serif;font-size:10pt;line-height:1.0;overflow-y:auto;flex:1;min-height:0;outline:none;white-space:pre-wrap"></div>
     </div>
-    <div style="font-size:11px;color:var(--muted)">Modifiable directement avant de copier dans Juvonno.</div>
+    <div style="font-size:11px;color:var(--muted)">Modifiable directement avant de copier dans l'étude.</div>
   </div>
 
   <!-- VUE NOTE IA -->
@@ -892,12 +897,15 @@ textarea:focus::placeholder{color:transparent}
         <button class="btn btn-outline btn-sm" onclick="retourNoteGeneree()">← Note générée</button>
       </div>
       <div style="font-size:13px;font-weight:600;color:var(--purple)">✨ Note enrichie par l'IA</div>
-      <button class="btn btn-note btn-sm" onclick="copyNoteIA()">📋 Copier</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" id="btnResumeIA" onclick="toggleResumeNote('ia')">📄 Voir résumé</button>
+        <button class="btn btn-note btn-sm" onclick="copyNoteIA()">📋 Copier</button>
+      </div>
     </div>
     <div class="note-finale-box">
       <div id="noteIAText" contenteditable="true" spellcheck="false" autocorrect="off" style="font-family:Calibri,sans-serif;font-size:10pt;line-height:1.0;overflow-y:auto;flex:1;min-height:0;outline:none;white-space:pre-wrap"></div>
     </div>
-    <div style="font-size:11px;color:var(--muted)">Modifiable directement avant de copier dans Juvonno.</div>
+    <div style="font-size:11px;color:var(--muted)">Modifiable directement avant de copier dans l'étude.</div>
   </div>
 </div>
 
@@ -919,7 +927,7 @@ var CONFIG = {
   alertDarkBg: '#1e2820',
   alertBtnCss: 'var(--blue)',
   chambresTcco2: ['Chambre 2','Chambre 6'],
-  consentMap: {'oui':'Consentement verbal obtenu, questionnaire complété sur place.','sans_q':'Consentement verbal obtenu, questionnaire non complété.'},
+  consentMap: {'oui':'Consentement verbal obtenu, questionnaire complété sur place','sans_q':'Consentement verbal obtenu, questionnaire non complété'},
   questNuitMap: {'remis':'Aide-mémoire de rendez-vous de suivi remis au client.','deja_rdv':'Le client a déjà son rendez-vous de suivi.'},
   questNuitLabel: 'Aide-mémoire RDV : ',
   promptEtablissement: 'la Hôpital de la Cité de la Santé — CISSS de Laval (CSR Sommets), à Blainville/Laurentides, Québec',
@@ -972,6 +980,7 @@ function addMed() {
   document.getElementById('medCoucher').checked = false;
   resetAnalyseInter();
   renderMeds(); updatePreview();
+  document.getElementById('medNom').focus();
 }
 function editMed(id) {
   if(editingMedId === id) { cancelEditMed(); return; } // toggle
@@ -2388,16 +2397,24 @@ function buildSection_accueil() {
   L.push('Accueil & évaluation initiale');
   if(acc.length)  L.push(acc.join('. ') + '.');
   if(sv.length)   L.push(sv.join(' — ') + '.');
+  if(v('conditions')) L.push('Informations complémentaires : ' + v('conditions'));
   if(meds.length) {
     var hab = [], cou = [];
     for(var i=0;i<meds.length;i++) {
       var s = meds[i].nom + (meds[i].dose ? ' ' + meds[i].dose : '');
       if(meds[i].coucher) cou.push(s); else hab.push(s);
     }
-    if(hab.length) L.push('Médication habituelle : ' + hab.join(', ') + '.');
-    if(cou.length) L.push('Pris au coucher ce soir : ' + cou.join(', ') + '.');
+    if(hab.length) {
+      L.push('');
+      L.push('Médication habituelle :');
+      for(var i=0;i<hab.length;i++) L.push(hab[i]);
+    }
+    if(cou.length) {
+      L.push('');
+      L.push('Pris au coucher ce soir :');
+      for(var i=0;i<cou.length;i++) L.push(cou[i]);
+    }
   }
-  if(v('conditions')) L.push('Informations complémentaires : ' + v('conditions'));
   L.push('');
   return L;
 }
@@ -2703,6 +2720,175 @@ function buildNote() {
   return L.join('\n');
 }
 
+// ─────────────────────────────────────
+// RÉSUMÉ DOSSIER — sous-ensemble de sections.
+// La classification se fait par lignes (indicesResume), réutilisée :
+//   • sur le TEXTE pour la copie brute (extraireResumeTexte)
+//   • sur les NŒUDS HTML déjà rendus pour préserver la mise en forme (filtrerResumeHTML)
+//   ③ partiel : médication + informations complémentaires
+//   ⑤ + additionnels : enregistrement, note évolutive, journal, zopiclone,
+//      nuit partagée, titration, O₂, urgence, TILE
+//   ⑥ partiel : commentaires libres de révision seulement
+//   Exclus : entête, identification, consentement, signes vitaux,
+//      analyse interactions, paragraphe questionnaire/scoring/distribution, signature.
+// ─────────────────────────────────────
+function _resTitreEncadre(t){
+  // formatNote rend les titres « ── X ── » en affichant seulement « X ».
+  // On accepte donc les deux formes (avec ou sans tirets).
+  return /^── .+ ──$/.test(t)
+      || /^NOTE ÉVOLUTIVE EN COURS DE NUIT$/.test(t)
+      || /^COMMENTAIRES DE RÉVISION$/.test(t);
+}
+function _resEstNoteEvolutive(t){
+  return /NOTE ÉVOLUTIVE/.test(t);
+}
+function _resEstCommRevision(t){
+  return /COMMENTAIRES DE RÉVISION/.test(t);
+}
+function _resTitreGardeIntegral(t){
+  return /^Appareillage initial/.test(t)
+      || /^Nuit partagée/.test(t)
+      || /^Titration PPC/.test(t)
+      || /^Oxygène/.test(t)
+      || /^PSG précédant TILE/.test(t)
+      || /^⚠ ÉVÉNEMENT URGENT/.test(t)
+      || /^Nitroglycérine/.test(t)
+      || /^Salbutamol/.test(t)
+      || /^Acétaminophène/.test(t)
+      || /^Tylénol/.test(t)
+      || /^Ventolin/.test(t);
+}
+function _resTitreQuelconque(t){
+  return /^OBSERVATIONS CLINIQUES/.test(t)
+      || /^Accueil & évaluation initiale/.test(t)
+      || /^Enregistrement/.test(t)
+      || /^Analyse des interactions/.test(t)
+      || /^Interactions médicamenteuses/.test(t)
+      || _resTitreEncadre(t)
+      || _resTitreGardeIntegral(t);
+}
+// Titres devant lesquels le résumé force une ligne vide (sauf en tout premier)
+function _resBesoinEspaceAvant(t){
+  return /^Médication habituelle\s*:/.test(t) || /^NOTE ÉVOLUTIVE EN COURS DE NUIT$/.test(t);
+}
+// Retourne un tableau de booléens : true = ligne conservée dans le résumé
+function indicesResume(lignes){
+  var keep = new Array(lignes.length); for(var z=0;z<keep.length;z++) keep[z]=false;
+  var i = 0;
+  function strip(s){ return s.replace(/§[A-Z0-9]+§/g,'').trim(); }
+  while(i < lignes.length){
+    var t = strip(lignes[i]);
+
+    // ③ partiel : médication + informations complémentaires
+    if(/^Médication habituelle\s*:/.test(t) || /^Pris au coucher ce soir\s*:/.test(t)){
+      keep[i]=true; i++;
+      while(i < lignes.length){
+        var s = strip(lignes[i]);
+        if(s === '' || /^Pris au coucher ce soir\s*:/.test(s) || /^Médication habituelle\s*:/.test(s)
+           || /^Informations complémentaires\s*:/.test(s) || _resTitreQuelconque(s)) break;
+        keep[i]=true; i++;
+      }
+      continue;
+    }
+    if(/^Informations complémentaires\s*:/.test(t)){ keep[i]=true; i++; continue; }
+
+    // ⑤ note évolutive
+    if(_resTitreEncadre(t) && /NOTE ÉVOLUTIVE/.test(t)){
+      keep[i]=true; i++;
+      while(i < lignes.length){ if(_resTitreQuelconque(strip(lignes[i]))) break; keep[i]=true; i++; }
+      continue;
+    }
+
+    // ⑤ + additionnels : sections gardées intégralement
+    if(_resTitreGardeIntegral(t)){
+      keep[i]=true; i++;
+      while(i < lignes.length){ if(_resTitreQuelconque(strip(lignes[i]))) break; keep[i]=true; i++; }
+      continue;
+    }
+
+    // ⑥ partiel : commentaires libres de révision seulement
+    if(_resTitreEncadre(t) && /COMMENTAIRES DE RÉVISION/.test(t)){
+      keep[i]=true; i++;
+      while(i < lignes.length){
+        var s4 = strip(lignes[i]);
+        if(s4 === '' || _resTitreQuelconque(s4)) break;
+        keep[i]=true; i++;
+      }
+      while(i < lignes.length && !_resTitreQuelconque(strip(lignes[i]))) i++;
+      continue;
+    }
+
+    i++;
+  }
+  return keep;
+}
+
+// Résumé en texte brut (pour copie) — tokens retirés, vides nettoyés
+function extraireResumeTexte(texteBrut){
+  if(!texteBrut) return '';
+  var lignes = texteBrut.split('\n');
+  var keep = indicesResume(lignes);
+  var out = [];
+  for(var i=0;i<lignes.length;i++){
+    if(!keep[i]) continue;
+    var ln = lignes[i].replace(/§[A-Z0-9]+§/g,'');
+    if(ln.trim()===''){
+      if(out.length===0) continue;
+      if(out[out.length-1].trim()==='') continue;
+    } else {
+      // Forcer une ligne vide avant certains titres (sauf en tout premier)
+      if(_resBesoinEspaceAvant(ln.trim()) && out.length>0 && out[out.length-1].trim()!==''){
+        out.push('');
+      }
+    }
+    out.push(ln);
+  }
+  while(out.length && out[out.length-1].trim()==='') out.pop();
+  // espaces résiduels en début de ligne (tokens retirés)
+  return out.map(function(l){return l.replace(/^\s+/, function(m){return m.length>1?'':m;});}).join('\n');
+}
+
+// Filtre les NŒUDS HTML déjà rendus par formatNote (préserve couleurs/styles + édits).
+// Chaque bloc rendu correspond à une ligne ; on classe par textContent.
+function filtrerResumeHTML(sourceHTML){
+  var tmp = document.createElement('div');
+  tmp.innerHTML = sourceHTML;
+  // formatNote enveloppe tout dans un <div> unique
+  var container = tmp;
+  if(tmp.children.length === 1 && tmp.firstElementChild && tmp.firstElementChild.tagName === 'DIV'
+     && tmp.firstElementChild.children.length > 1){
+    container = tmp.firstElementChild;
+  }
+  var blocs = Array.prototype.slice.call(container.children);
+  var lignes = blocs.map(function(n){ return (n.textContent||'').replace(/\u00a0/g,' '); });
+  var keep = indicesResume(lignes);
+  // Reconstruire en gardant les nœuds (clonés) conservés, sans vides en tête/queue/doublons
+  var BLANK_RES = 'font-family:Calibri,sans-serif;font-size:10pt;line-height:1.0;margin:0;padding:0;height:1em';
+  var wrap = document.createElement('div');
+  var lastBlank = true;
+  for(var i=0;i<blocs.length;i++){
+    if(!keep[i]) continue;
+    var estVide = (lignes[i].trim()==='');
+    if(estVide){ if(lastBlank) continue; lastBlank=true; }
+    else {
+      // Forcer une ligne vide avant certains titres (sauf en tout premier)
+      if(_resBesoinEspaceAvant(lignes[i].trim()) && wrap.children.length>0 && !lastBlank){
+        var b = document.createElement('div'); b.setAttribute('style', BLANK_RES); b.innerHTML='&nbsp;';
+        wrap.appendChild(b);
+      }
+      lastBlank=false;
+    }
+    wrap.appendChild(blocs[i].cloneNode(true));
+  }
+  // retirer vides en queue
+  while(wrap.lastElementChild && (wrap.lastElementChild.textContent||'').replace(/\u00a0/g,' ').trim()==='')
+    wrap.removeChild(wrap.lastElementChild);
+  // ré-envelopper comme formatNote (conserve la police de base du conteneur source)
+  var outer = (container !== tmp) ? container.cloneNode(false) : document.createElement('div');
+  outer.innerHTML = wrap.innerHTML;
+  return outer.outerHTML;
+}
+
 function formatNote(text) {
   var BASE_NO_SIZE = 'font-family:Calibri,sans-serif;line-height:1.0;margin:0;margin-top:0;margin-bottom:0;padding:0;mso-line-height-rule:exactly;mso-margin-top-alt:0cm;mso-margin-bottom-alt:0cm;';
   var BASE = BASE_NO_SIZE + 'font-size:10pt;';
@@ -2738,6 +2924,7 @@ function formatNote(text) {
       for(var j=i+1;j<cleaned.length;j++){ if(cleaned[j].trim()!==''){next=cleaned[j].trim();break;} }
       var nextIsTitle = /^OBSERVATIONS CLINIQUES/.test(next)
         || /^── .+ ──$/.test(next)        || /^(Accueil & évaluation initiale|Enregistrement|Appareillage initial|Nuit partagée — Bascule DX → TX|Titration PPC|Journal des événements|Oxygène d|Zopiclone( \(OC-LAB-008\))?|Salbutamol( \(OC-LAB-009\))?|Acétaminophène( \(OC-LAB-009\))?|Nitroglycérine SL( \(OC-LAB-009\))?|PSG précédant TILE|Fin de nuit|⚠ ÉVÉNEMENT URGENT)$/.test(next)
+        || /^(Médication habituelle :|Pris au coucher ce soir :)$/.test(next)
         || /^(Oxygène d|Interactions médicamenteuses)/.test(next);
       if(!nextIsTitle) pushBlank();
       continue;
@@ -2760,7 +2947,7 @@ function formatNote(text) {
       // Ajouter un espace après seulement si la ligne suivante n'est pas un titre de section
       var nextAfter = '';
       for(var jj=i+1;jj<cleaned.length;jj++){if(cleaned[jj].trim()!==''){nextAfter=cleaned[jj].trim();break;}}
-      var nextIsSect = /^── .+ ──$/.test(nextAfter) || /^(Journal des événements|Accueil & évaluation initiale|Enregistrement|Appareillage initial|Nuit partagée — Bascule DX → TX|Titration PPC|Zopiclone( \(OC-LAB-008\))?|PSG précédant TILE|Fin de nuit|⚠|Note consignée|OBSERVATIONS)$/.test(nextAfter) || /^(Oxygène d|Interactions médicamenteuses)/.test(nextAfter) || nextAfter==='' ;
+      var nextIsSect = /^── .+ ──$/.test(nextAfter) || /^(Journal des événements|Accueil & évaluation initiale|Enregistrement|Appareillage initial|Nuit partagée — Bascule DX → TX|Titration PPC|Zopiclone( \(OC-LAB-008\))?|PSG précédant TILE|Fin de nuit|⚠|Note consignée|OBSERVATIONS|Médication habituelle :|Pris au coucher ce soir :)$/.test(nextAfter) || /^(Oxygène d|Interactions médicamenteuses)/.test(nextAfter) || nextAfter==='' ;
       if(isComm || (!nextIsSect)) pushBlank();
       continue;
     }
@@ -2775,6 +2962,7 @@ function formatNote(text) {
     var sectColors = { 'Accueil & évaluation initiale':BLUE, 'Enregistrement':BLUE, 'Appareillage initial':BLUE,
       'Nuit partagée — Bascule DX → TX':NOTE_ACCENT,
       'Interactions médicamenteuses':BLUE,
+      'Médication habituelle :':BLUE, 'Pris au coucher ce soir :':BLUE,
       'Titration PPC':'#c96a00',
       'Journal des événements':BLUE, 'Évolution en cours':NAVY,
       'Zopiclone (OC-LAB-008)':'#7b5ea7', 'Zopiclone':'#7b5ea7',
@@ -2853,6 +3041,7 @@ function formatNote(text) {
 
   return '<div style="'+BASE+'">'+out.join('')+'</div>';
 }
+var apercuMode = 'complet'; // 'complet' ou 'resume'
 function updatePreview(){
   var manquants=validerChamps();
   var box=document.getElementById('previewBox');
@@ -2863,8 +3052,51 @@ function updatePreview(){
     return;
   }
   var note=buildNote();
-  if(note){box.style.color='var(--text)';box.style.fontStyle='normal';box.style.lineHeight='1.0';box.style.fontSize='13px';box.innerHTML=formatNote(note);}
-  else{box.style.color='var(--muted)';box.style.fontStyle='italic';box.innerHTML='Commencez à remplir le formulaire — l\'aperçu apparaîtra ici au fur et à mesure.';}
+  if(apercuMode === 'resume'){
+    // Résumé = filtre des blocs HTML déjà rendus (préserve couleurs/styles)
+    if(note){
+      box.style.color='var(--text)';box.style.fontStyle='normal';box.style.lineHeight='1.0';box.style.fontSize='13px';
+      box.innerHTML = filtrerResumeHTML(formatNote(note));
+    } else {box.style.color='var(--muted)';box.style.fontStyle='italic';box.innerHTML='Aucune section à résumer pour le moment.';}
+  } else {
+    if(note){box.style.color='var(--text)';box.style.fontStyle='normal';box.style.lineHeight='1.0';box.style.fontSize='13px';box.innerHTML=formatNote(note);}
+    else{box.style.color='var(--muted)';box.style.fontStyle='italic';box.innerHTML='Commencez à remplir le formulaire — l\'aperçu apparaîtra ici au fur et à mesure.';}
+  }
+}
+function toggleApercuMode(){
+  apercuMode = (apercuMode === 'complet') ? 'resume' : 'complet';
+  var lbl = document.getElementById('apercuModeLabel');
+  var btn = document.getElementById('btnApercuMode');
+  if(lbl) lbl.textContent = (apercuMode === 'resume') ? 'Résumé dossier' : 'Note complète';
+  if(btn) btn.textContent = (apercuMode === 'resume') ? '↩ Voir note complète' : '📄 Voir résumé';
+  updatePreview();
+}
+
+// Bascule résumé dans les vues note (finale / IA) — affiche le résumé filtré
+// DEPUIS LE TEXTE AFFICHÉ (reflète retouches manuelles + enrichissement IA),
+// en lecture seule ; restaure le contenu éditable complet au retour.
+var noteViewMode = { finale:'complet', ia:'complet' };
+var noteViewFull = { finale:'', ia:'' };
+function toggleResumeNote(view){
+  var elId = (view==='ia') ? 'noteIAText' : 'noteFinaleText';
+  var btnId = (view==='ia') ? 'btnResumeIA' : 'btnResumeFinale';
+  var el = document.getElementById(elId);
+  var btn = document.getElementById(btnId);
+  if(!el) return;
+  if(noteViewMode[view] === 'complet'){
+    noteViewFull[view] = el.innerHTML;             // mémoriser le contenu complet (avec édits/IA)
+    el.innerHTML = filtrerResumeHTML(el.innerHTML); // filtrer les blocs rendus (préserve la mise en forme)
+    el.setAttribute('contenteditable','false');
+    el.style.opacity = '0.97';
+    noteViewMode[view] = 'resume';
+    if(btn) btn.textContent = '↩ Note complète';
+  } else {
+    el.innerHTML = noteViewFull[view];             // restaurer intégralement
+    el.setAttribute('contenteditable','true');
+    el.style.opacity = '';
+    noteViewMode[view] = 'complet';
+    if(btn) btn.textContent = '📄 Voir résumé';
+  }
 }
 var allInputs=document.querySelectorAll('input, select, textarea');
 for(var i=0;i<allInputs.length;i++){allInputs[i].addEventListener('input',updatePreview);allInputs[i].addEventListener('change',updatePreview);}
@@ -3020,14 +3252,63 @@ function genererNote(){
   enterModeNote();
   document.getElementById('noteFinaleText').innerHTML=formatNote(note);
   noteFinaleSnapshot = document.getElementById('noteFinaleText').innerHTML;
+  noteViewMode.finale = 'complet';
+  document.getElementById('noteFinaleText').setAttribute('contenteditable','true');
+  document.getElementById('noteFinaleText').style.opacity='';
+  var _br = document.getElementById('btnResumeFinale'); if(_br) _br.textContent='📄 Voir résumé';
   document.getElementById('viewApercu').style.display='none';
   document.getElementById('viewIA').style.display='none';
   document.getElementById('viewFinale').style.display='flex';
 }
+// Texte brut propre : un saut de ligne par bloc rendu (évite le double \n
+// que produit innerText entre éléments de type bloc, donc plus d'espace
+// supplémentaire entre les lignes au collage dans un champ texte simple).
+function texteBrutDepuisBlocs(el){
+  if(!el) return '';
+  // formatNote enveloppe tout dans un <div> unique
+  var container = el;
+  if(el.children.length === 1 && el.firstElementChild && el.firstElementChild.tagName === 'DIV'
+     && el.firstElementChild.children.length > 1){
+    container = el.firstElementChild;
+  }
+  if(!container.children || container.children.length === 0){
+    // Pas de structure en blocs : repli sur innerText en compactant les \n multiples
+    return (el.innerText||'').replace(/\n{2,}/g,'\n').replace(/[ \t]+\n/g,'\n').trim();
+  }
+  var blocs = Array.prototype.slice.call(container.children);
+  var lignes = blocs.map(function(n){
+    return (n.textContent||'').replace(/\u00a0/g,' ').replace(/\s+$/,'');
+  });
+  // Retirer vides en tête/queue
+  while(lignes.length && lignes[0].trim()==='') lignes.shift();
+  while(lignes.length && lignes[lignes.length-1].trim()==='') lignes.pop();
+  return lignes.join('\n');
+}
+
+// HTML pour le presse-papiers : enveloppe les portions en gras (font-weight)
+// dans des balises <b>, car beaucoup de champs riches honorent <b> mais
+// nettoient les styles CSS inline. Les styles (couleur) sont conservés pour
+// les champs qui, eux, honorent le CSS.
+function htmlPourPressePapier(el){
+  if(!el) return '';
+  var clone = el.cloneNode(true);
+  var tous = clone.querySelectorAll('*');
+  for(var i=0;i<tous.length;i++){
+    var node = tous[i];
+    var fw = node.style && node.style.fontWeight;
+    if(fw && (fw === 'bold' || fw === 'bolder' || parseInt(fw,10) >= 600)){
+      var b = document.createElement('b');
+      while(node.firstChild) b.appendChild(node.firstChild);
+      node.appendChild(b);
+    }
+  }
+  return clone.innerHTML;
+}
+
 function copierRiche(el, btn, btnDefaut){
   if(!el) return;
-  var html = el.innerHTML;
-  var texte = el.innerText;
+  var html = htmlPourPressePapier(el);
+  var texte = texteBrutDepuisBlocs(el);
   function fallback(){
     var range = document.createRange();
     range.selectNodeContents(el);
@@ -4448,7 +4729,10 @@ NETTOYAGE DE LA NOTE BRUTE
 La note brute peut contenir des artefacts à éliminer : tirets horizontaux (---) entre sections, puces ou tirets devant les items, doubles sauts de ligne, espaces superflus. Ces éléments doivent disparaître dans la note enrichie. Les données sont conservées intégralement mais reformulées en prose fluide et continue.
 
 RÉDACTION EN PROSE
-Les sections Accueil et évaluation initiale et Enregistrement doivent être rédigées en prose continue. Toutes les données (PA, SpO₂, poids, taille, IMC, médication, précautions, lights-off, lights-on, qualité technique, artefacts) sont intégrées en une ou deux phrases cohérentes, pas listées ligne par ligne.
+Les sections Accueil et évaluation initiale et Enregistrement doivent être rédigées en prose continue. Toutes les données (PA, SpO₂, poids, taille, IMC, précautions, lights-off, lights-on, qualité technique, artefacts) sont intégrées en une ou deux phrases cohérentes, pas listées ligne par ligne. EXCEPTION : la médication n'est jamais fondue dans la prose (voir règle MÉDICATION).
+
+MÉDICATION — LISTE VERTICALE, RÈGLE ABSOLUE
+Dans la section Accueil et évaluation initiale, la médication est présentée en liste verticale, un médicament par ligne, exactement telle qu'elle apparaît dans la note brute. Reproduire les lignes de libellé (« Médication habituelle : », « Pris au coucher ce soir : ») et les médicaments qui suivent, chacun sur sa propre ligne, sans les fusionner, sans les mettre en prose, sans les regrouper sur une seule ligne séparée par des virgules. Ne pas ajouter de puces ni de tirets devant les médicaments. Corriger seulement une faute d'orthographe évidente dans un nom de médicament; ne rien ajouter d'autre.
 
 DONNÉES ET FIDÉLITÉ
 Utiliser uniquement les données explicitement présentes dans la note brute. Ne jamais inventer, inférer ou extrapoler. Corriger l'orthographe et la syntaxe sans altérer le sens clinique. Si une donnée est absente, laisser la section vide ou indiquer non documenté.
@@ -4456,8 +4740,8 @@ Utiliser uniquement les données explicitement présentes dans la note brute. Ne
 TERMINOLOGIE ET FORMATAGE
 AASM Manual v3 (Troester et al., 2023). CPAP, BiPAP, APAP en majuscules. Pressions en cmH₂O, SpO₂ en %, FC en /min, poids en kg, taille en cm, IMC en kg/m². Noms de marques et modèles de masques tels qu'ils apparaissent dans la note brute. Médicaments en minuscules sauf si nom de marque clairement identifié. Heures au format HH h MM avec espace avant et après le h (ex. : 21 h 00, 02 h 30).
 
-TITRATION PPC — RÈGLE IMPORTANTE
-Pour la section Titration PPC (PSG-TX et PSG-SN) : Si aucun palier de pression n'est présent dans le module (seulement des changements de masques ou module vide), ne pas générer de section Titration — passer directement à la suite. DÈS QU'AU MOINS UN PALIER DE PRESSION EST PRÉSENT, tu DOIS OBLIGATOIREMENT générer une section intitulée « Titration PPC » placée APRÈS le Journal des événements. Ne jamais l'omettre. Cette section contient un résumé concis de l'essentiel : pression de départ, pression finale, éléments cliniques déterminants (stade REM, position, masque). Pas de play-by-play, pas de liste chronologique, pas de détails intermédiaires mineurs. La longueur s'adapte à la complexité de la nuit.
+TITRATION PPC — NE PAS SYNTHÉTISER
+Ne jamais générer de section ou de paragraphe « Titration PPC » résumant les paliers de pression. Les paliers font partie du Journal des événements et sont reproduits tels quels dans cette section. N'extrais pas, ne résume pas et ne reformule pas les paliers ailleurs dans la note.
 
 COMMENTAIRES DE RÉVISION — RÈGLE ANTI-RÉPÉTITION
 Si une pression thérapeutique ou une conclusion de titration est déjà présente dans les commentaires de révision bruts, ne pas la répéter ni la reformuler ailleurs dans la note. L'intégrer telle quelle. S'applique à PSG-TX et PSG-SN.
@@ -4477,6 +4761,9 @@ Urgences nocturnes : Documenter les faits et interventions uniquement, sans inte
 STRUCTURE
 Respecter strictement l'ordre et le nombre de sections de la note brute — ne jamais en ajouter ni fusionner. Chaque section commence par son titre. La phrase de validation italique apparaît UNE SEULE FOIS, à la toute fin, après la signature : *Ces observations cliniques et les recommandations thérapeutiques qui en découlent sont soumises à l'interprétation et à la validation du médecin responsable du dossier.*
 
+SIGNATURE — RÈGLE ABSOLUE
+La note brute est fournie SANS entête identifiant ni signature (retirés pour la confidentialité). Ne jamais reconstruire, inventer ni ajouter de bloc-signature, de titre de fonction (« Inhalothérapeute — RPSGT », « Technologue », etc.), de nom d'établissement ou de service en fin de note. Ne pas signer la note. Ces éléments sont réintégrés automatiquement par le système. La note enrichie se termine par la dernière section clinique, puis la phrase de validation italique — rien d'autre.
+
 TITRES DE SECTION — RÈGLE ABSOLUE
 Ne jamais modifier, reformuler ou réécrire les titres de section. Les reproduire mot pour mot exactement tels qu'ils apparaissent dans la note brute. Les titres NOTE ÉVOLUTIVE EN COURS DE NUIT et COMMENTAIRES DE RÉVISION doivent être écrits exactement ainsi, en majuscules, sans aucun formatage Markdown autour. Ne jamais utiliser le formatage Markdown pour les titres — les écrire en texte brut uniquement. La mise en forme visuelle est gérée automatiquement par le système.
 
@@ -4492,7 +4779,7 @@ Rédiger en prose clinique. Premier paragraphe : reproduire les commentaires de 
 HUMIDIFICATION
 Sous CPAP ou BiPAP, l'air est déjà humidifié par défaut au laboratoire. Ne jamais suggérer d'ajouter de l'humidification comme recommandation thérapeutique.
 
-NE JAMAIS : Inventer des données. Émettre un diagnostic. Modifier heures, pressions ou valeurs numériques. Utiliser un langage alarmiste. Doubler la phrase de validation. Créer des sections absentes de la note brute. Modifier les titres de section. Utiliser le formatage Markdown. Ajouter une date de consignation.`
+NE JAMAIS : Inventer des données. Émettre un diagnostic. Modifier heures, pressions ou valeurs numériques. Utiliser un langage alarmiste. Doubler la phrase de validation. Créer des sections absentes de la note brute. Modifier les titres de section. Utiliser le formatage Markdown. Ajouter une date de consignation. Ajouter un bloc-signature, un titre de fonction (Inhalothérapeute, RPSGT, Technologue), un nom d'établissement ou de service en fin de note.`
 
 var IA_PROMPT_BASE = IA_PROMPT_SYSTEME; // Déclaré APRÈS IA_PROMPT_SYSTEME — immuable
 var IA_CONSIGNES = ''; // Consignes additionnelles — session seulement
@@ -4562,6 +4849,62 @@ function iaEstTitration() {
   return etudeActive === 'PSG-TX' || etudeActive === 'PSG-SN';
 }
 
+// Réinjecte les lignes identifiantes (retirées avant l'envoi à l'IA pour la Loi 25)
+// dans la note enrichie retournée par l'IA. L'entête provient des données du
+// formulaire, jamais de l'IA — celle-ci ne reçoit donc aucune donnée identifiante.
+function iaReinjecterIdentifiants(noteIA) {
+  var chambre = chambreActive, date = v('dateExamen'), inh = v('inh'), dossier = v('dossier');
+  var etude = etudeActive || '—';
+
+  // Lignes d'entête identifiantes (mêmes formats que buildSection_entete)
+  var ligneTitreEtude = etude + ' — ' + (chambre || '(chambre non sélectionnée)');
+  if(date)    ligneTitreEtude += ' — ' + date;
+  if(dossier) ligneTitreEtude += ' — Dossier : ' + dossier;
+  var clinique = '';
+  for(var ck in CONFIG.cliniqueParInh){ if(inh.indexOf(ck) !== -1){ clinique = CONFIG.cliniqueParInh[ck]; break; } }
+  var ligneCollecte = inh ? ('Collecte de données effectuée par : ' + inh + (clinique ? ' — ' + clinique : '')) : '';
+
+  var lignes = noteIA.split('\n');
+
+  // 1) Réinsérer l'entête juste après la ligne « OBSERVATIONS CLINIQUES … »
+  var idxObs = -1;
+  for(var i=0;i<lignes.length;i++){
+    if(/^OBSERVATIONS CLINIQUES/.test(lignes[i].trim())){ idxObs = i; break; }
+  }
+  var aInserer = [ligneTitreEtude];
+  if(ligneCollecte) aInserer.push(ligneCollecte);
+  if(idxObs !== -1){
+    // Éviter les doublons si l'IA aurait conservé une de ces lignes
+    var dejaPresent = lignes.some(function(l){ return l.trim() === ligneTitreEtude.trim(); });
+    if(!dejaPresent){
+      lignes.splice.apply(lignes, [idxObs+1, 0].concat(aInserer));
+    }
+  } else {
+    // Pas de ligne OBSERVATIONS trouvée → préfixer en tête
+    lignes = aInserer.concat([''], lignes);
+  }
+
+  // 2) Réinsérer la signature « Note consignée par : … » à la fin si absente
+  if(inh){
+    var signature = 'Note consignée par : ' + inh;
+    var sigPresente = lignes.some(function(l){ return /^Note consignée par\s*:/.test(l.trim()); });
+    if(!sigPresente){
+      // Insérer avant la phrase de validation italique en fin de note si elle existe
+      var idxValid = -1;
+      for(var k=lignes.length-1;k>=0;k--){
+        if(/soumises à l.interprétation et à la validation/.test(lignes[k])){ idxValid = k; break; }
+      }
+      if(idxValid !== -1){
+        lignes.splice(idxValid, 0, '', signature, '');
+      } else {
+        lignes.push('', signature);
+      }
+    }
+  }
+
+  return lignes.join('\n');
+}
+
 async function iaGenererNote() {
   if(!IA_API_KEY || !IA_API_KEY.trim()) {
     alert("Clé API manquante.\n\nOuvre le menu ⚙️ Prompt de base pour saisir ta clé Anthropic.");
@@ -4605,9 +4948,16 @@ async function iaGenererNote() {
         propre = propre.replace(new RegExp('(^|\\n)' + pair[0] + '(\\n|$)', 'g'), '$1' + pair[1] + '$2');
       });
 
+      // Réinjecter les identifiants retirés avant l'envoi à l'IA (Loi 25)
+      propre = iaReinjecterIdentifiants(propre);
+
       // Afficher dans la vue IA
       enterModeNote();
       document.getElementById('noteIAText').innerHTML = formatNote(propre);
+      noteViewMode.ia = 'complet';
+      document.getElementById('noteIAText').setAttribute('contenteditable','true');
+      document.getElementById('noteIAText').style.opacity='';
+      var _bri = document.getElementById('btnResumeIA'); if(_bri) _bri.textContent='📄 Voir résumé';
       document.getElementById('viewFinale').style.display = 'none';
       document.getElementById('viewIA').style.display = 'flex';
     }
