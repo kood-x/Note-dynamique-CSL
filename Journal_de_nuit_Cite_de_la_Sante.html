@@ -2809,6 +2809,9 @@ function indicesResume(lignes){
     // ⑥ partiel : commentaires libres de révision seulement
     if(_resTitreEncadre(t) && /COMMENTAIRES DE RÉVISION/.test(t)){
       keep[i]=true; i++;
+      // formatNote insère une ligne vide juste après ce titre : la sauter (sans la garder)
+      while(i < lignes.length && strip(lignes[i]) === '') i++;
+      // Capturer le texte du commentaire jusqu'à la prochaine ligne vide (= avant le paragraphe auto)
       while(i < lignes.length){
         var s4 = strip(lignes[i]);
         if(s4 === '' || _resTitreQuelconque(s4)) break;
@@ -2915,6 +2918,7 @@ function formatNote(text) {
 
   var out = [];
   function pushBlank(){ if(out.length && out[out.length-1]===BLANK) return; out.push(BLANK); }
+  var dansMedication = false; // vrai sous « Médication habituelle / Pris au coucher » (lignes de médicaments)
   for(var i=0;i<cleaned.length;i++){
     var raw = cleaned[i];
 
@@ -2922,6 +2926,8 @@ function formatNote(text) {
     if(raw === ''){
       var next = '';
       for(var j=i+1;j<cleaned.length;j++){ if(cleaned[j].trim()!==''){next=cleaned[j].trim();break;} }
+      // Sortir de la zone médication, sauf si le bloc suivant est l'autre libellé médication
+      if(dansMedication && !/^(Médication habituelle :|Pris au coucher ce soir :)$/.test(next)) dansMedication = false;
       var nextIsTitle = /^OBSERVATIONS CLINIQUES/.test(next)
         || /^── .+ ──$/.test(next)        || /^(Accueil & évaluation initiale|Enregistrement|Appareillage initial|Nuit partagée — Bascule DX → TX|Titration PPC|Journal des événements|Oxygène d|Zopiclone( \(OC-LAB-008\))?|Salbutamol( \(OC-LAB-009\))?|Acétaminophène( \(OC-LAB-009\))?|Nitroglycérine SL( \(OC-LAB-009\))?|PSG précédant TILE|Fin de nuit|⚠ ÉVÉNEMENT URGENT)$/.test(next)
         || /^(Médication habituelle :|Pris au coucher ce soir :)$/.test(next)
@@ -2974,11 +2980,15 @@ function formatNote(text) {
     var sectPrefixes = { 'Oxygène d':NOTE_O2, 'Interactions médicamenteuses':BLUE };
     var noBreak = raw.indexOf('§NOBREAK§')===0;
     var rawForSect = noBreak ? raw.substring(9) : raw;
+    var estLibelleMed = (rawForSect === 'Médication habituelle :' || rawForSect === 'Pris au coucher ce soir :');
+    // Suivi de la zone médication : les libellés l'activent, les lignes de médicaments
+    // qui suivent ne doivent jamais être confondues avec un titre de section (ex. « Zopiclone »).
+    if(estLibelleMed) dansMedication = true;
     var sectColor = null;
-    // 1. Match exact (titre seul sur sa ligne)
-    if(sectColors[rawForSect] !== undefined) sectColor = sectColors[rawForSect];
+    // 1. Match exact (titre seul sur sa ligne) — désactivé pour les lignes de médicaments
+    if((estLibelleMed || !dansMedication) && sectColors[rawForSect] !== undefined) sectColor = sectColors[rawForSect];
     // 2. Sinon, préfixes pour les titres à suffixe variable
-    if(sectColor===null){
+    if(sectColor===null && !dansMedication){
       var pk = Object.keys(sectPrefixes);
       for(var pi=0;pi<pk.length;pi++){ if(rawForSect.indexOf(pk[pi])===0){sectColor=sectPrefixes[pk[pi]];break;} }
     }
